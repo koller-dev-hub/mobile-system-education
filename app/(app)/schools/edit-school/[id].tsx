@@ -51,6 +51,8 @@ export default function EditSchoolScreen() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [showStateModal, setShowStateModal] = useState(false);
   const [showCountryModal, setShowCountryModal] = useState(false);
+  const [stateQuery, setStateQuery] = useState('');
+  const [debouncedStateQuery, setDebouncedStateQuery] = useState('');
   const [initialData, setInitialData] = useState<SchoolForm | null>(null);
 
   const [formData, setFormData] = useState<SchoolForm>({
@@ -119,6 +121,11 @@ export default function EditSchoolScreen() {
   }, []);
 
   useEffect(() => {
+    const t = setTimeout(() => setDebouncedStateQuery(stateQuery), 200);
+    return () => clearTimeout(t);
+  }, [stateQuery]);
+
+  useEffect(() => {
     if (checkingAuth) return;
     (async () => {
       try {
@@ -165,6 +172,15 @@ export default function EditSchoolScreen() {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
+
+  const strip = (s: string) =>
+    s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const filteredStates = STATES.filter((st) =>
+    strip(st).toLowerCase().includes(strip(debouncedStateQuery).toLowerCase())
+  );
+  const sortedFilteredStates = [...filteredStates].sort((a, b) =>
+    a.localeCompare(b, 'pt', { sensitivity: 'base' })
+  );
 
   const onlyDigits = (s: string) => s.replace(/\D+/g, '');
   const formatCEP = (s: string) => {
@@ -444,7 +460,9 @@ export default function EditSchoolScreen() {
 
             <View style={{ marginBottom: 16 }}>
               <Text style={styles.label}>Estado</Text>
-              <View
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setShowStateModal(true)}
                 style={[
                   styles.inputRow,
                   { borderColor: errors.state ? '#DC2626' : '#E2E8F0' },
@@ -456,11 +474,9 @@ export default function EditSchoolScreen() {
                   placeholder='Estado'
                   placeholderTextColor='#94A3B8'
                   value={formData.state}
-                  onChangeText={(text) => updateForm('state', text)}
-                  onFocus={handleInputFocus}
-                  onBlur={handleInputBlur}
+                  editable={false}
                 />
-              </View>
+              </TouchableOpacity>
               {errors.state && (
                 <Text style={styles.errorText}>{errors.state}</Text>
               )}
@@ -618,13 +634,23 @@ export default function EditSchoolScreen() {
       <Modal visible={showStateModal} transparent animationType='fade'>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCardTall}>
-            <ScrollView>
-              {STATES.map((st) => (
+            <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+              <TextInput
+                style={styles.textInput}
+                placeholder='Buscar estado...'
+                placeholderTextColor='#94A3B8'
+                value={stateQuery}
+                onChangeText={setStateQuery}
+              />
+            </View>
+            <ScrollView keyboardShouldPersistTaps='always'>
+              {sortedFilteredStates.map((st) => (
                 <TouchableOpacity
                   key={st}
                   onPress={() => {
                     updateForm('state', st);
                     setShowStateModal(false);
+                    setStateQuery('');
                   }}
                   style={styles.modalItem}
                 >

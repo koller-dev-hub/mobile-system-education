@@ -3,9 +3,9 @@ import { Platform } from 'react-native';
 
 export const getBaseURL = () =>
   Platform.select({
-    ios: 'https://08054cfe4f24.ngrok-free.app',
+    ios: 'https://90426cda2ad1.ngrok-free.app',
     android: 'http://10.0.2.2:8080',
-    default: 'https://08054cfe4f24.ngrok-free.app',
+    default: 'https://90426cda2ad1.ngrok-free.app',
   }) as string;
 
 type Options = {

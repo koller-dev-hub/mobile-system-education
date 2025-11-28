@@ -50,6 +50,8 @@ export default function RegisterSchoolScreen() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [showStateModal, setShowStateModal] = useState(false);
   const [showCountryModal, setShowCountryModal] = useState(false);
+  const [stateQuery, setStateQuery] = useState('');
+  const [debouncedStateQuery, setDebouncedStateQuery] = useState('');
 
   const [formData, setFormData] = useState<SchoolForm>({
     name: '',
@@ -116,6 +118,11 @@ export default function RegisterSchoolScreen() {
     })();
   }, []);
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedStateQuery(stateQuery), 200);
+    return () => clearTimeout(t);
+  }, [stateQuery]);
+
   const animateTo = (value: number) => {
     Animated.timing(paddingAnimation, {
       toValue: value,
@@ -141,6 +148,15 @@ export default function RegisterSchoolScreen() {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
+
+  const strip = (s: string) =>
+    s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const filteredStates = STATES.filter((st) =>
+    strip(st).toLowerCase().includes(strip(debouncedStateQuery).toLowerCase())
+  );
+  const sortedFilteredStates = [...filteredStates].sort((a, b) =>
+    a.localeCompare(b, 'pt', { sensitivity: 'base' })
+  );
 
   const onlyDigits = (s: string) => s.replace(/\D+/g, '');
   const formatCEP = (s: string) => {
@@ -527,13 +543,24 @@ export default function RegisterSchoolScreen() {
             <Modal visible={showStateModal} transparent animationType='fade'>
               <View style={styles.modalOverlay}>
                 <View style={styles.modalCardTall}>
-                  <ScrollView>
-                    {STATES.map((st) => (
+                  <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder='Buscar estado...'
+                      placeholderTextColor='#94A3B8'
+                      value={stateQuery}
+                      onChangeText={setStateQuery}
+                    />
+                  </View>
+                  <ScrollView keyboardShouldPersistTaps='always'>
+                    {sortedFilteredStates.map((st) => (
                       <TouchableOpacity
                         key={st}
+                        activeOpacity={0.6}
                         onPress={() => {
                           updateForm('state', st);
                           setShowStateModal(false);
+                          setStateQuery('');
                         }}
                         style={styles.modalItem}
                       >
