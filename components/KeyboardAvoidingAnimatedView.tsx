@@ -40,7 +40,7 @@ const KeyboardAvoidingAnimatedView = React.forwardRef<
   } = props;
 
   const animatedViewRef = useRef<{ y: number; height: number } | null>(null);
-  const initialHeightRef = useRef(0);
+  const initialHeight = useSharedValue(0);
   const bottomHeight = useSharedValue(0);
 
   useEffect(() => {
@@ -88,7 +88,7 @@ const KeyboardAvoidingAnimatedView = React.forwardRef<
   const animatedStyle = useAnimatedStyle(() => {
     if (behavior === 'height') {
       return {
-        height: initialHeightRef.current - bottomHeight.value,
+        height: initialHeight.value - bottomHeight.value,
         flex: bottomHeight.value > 0 ? 0 : undefined,
       };
     }
@@ -108,8 +108,8 @@ const KeyboardAvoidingAnimatedView = React.forwardRef<
     const layout = event.nativeEvent.layout;
     animatedViewRef.current = layout;
 
-    if (!initialHeightRef.current) {
-      initialHeightRef.current = layout.height;
+    if (!initialHeight.value) {
+      initialHeight.value = layout.height;
     }
 
     if (onLayout) {
